@@ -31,7 +31,7 @@ This is a subclass of L<Plack::App::Proxy> that adds support for proxying
 WebSocket connections.  It has no extra dependencies or configuration options
 beyond what L<Plack::App::Proxy> requires or provides, so it may be an easy
 drop-in replacement.  Read the documentation of that module for advanced usage
-not covered by the L<SYNOPSIS>.
+not covered here.
 
 This subclass necessarily requires extra L<PSGI> server features in order to
 work.  The server must support C<psgi.streaming> and C<psgix.io>.  It is also
