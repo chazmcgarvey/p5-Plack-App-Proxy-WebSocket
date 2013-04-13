@@ -6,8 +6,8 @@ use strict;
 
 use AnyEvent::Handle;
 use AnyEvent::Socket;
+use HTTP::Parser::XS qw/parse_http_response HEADERS_AS_ARRAYREF/;
 use HTTP::Request;
-use HTTP::Response;
 use Plack::Request;
 use URI;
 
@@ -109,20 +109,17 @@ sub call {
                 my $hdl = shift;
                 my $buf = delete $hdl->{rbuf};
 
-                if ($writer) {
-                    $writer->write($buf);
-                    return;
-                }
+                return $writer->write($buf) if $writer;
+                $buffer .= $buf;
 
-                if (($buffer .= $buf) =~ s/^(.+\r?\n\r?\n)//s) {
-                    my $http = HTTP::Response->parse($1);
-                    my @headers;
-                    $http->headers->remove_header('Status');
-                    $http->headers->scan(sub { push @headers, @_ });
-                    $writer = $res->([$http->code, [@headers]]);
-                    $writer->write($buffer) if $buffer;
-                    $buffer = undef;
-                }
+                my ($ret, $http_version, $status, $message, $headers) =
+                    parse_http_response($buffer, HEADERS_AS_ARRAYREF);
+                $server->push_shutdown if $ret == -2;
+                return if $ret < 0;
+
+                $writer = $res->([$status, $headers]);
+                $writer->write(substr($buffer, $ret));
+                $buffer = undef;
             });
 
             # shut down the sockets and exit the loop if an error occurs
@@ -135,7 +132,7 @@ sub call {
             $server->on_error(sub {
                 $server->destroy;
                 # get the client handle's attention
-                $writer->close;
+                $client->push_shutdown;
             });
         };
 
