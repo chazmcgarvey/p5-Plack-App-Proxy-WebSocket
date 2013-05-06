@@ -28,22 +28,24 @@ use parent 'Plack::App::Proxy';
 
 =head1 DESCRIPTION
 
-This is a subclass of L<Plack::App::Proxy> that adds support for proxying
-WebSocket connections.  It works by looking for the C<Upgrade> header,
-forwarding the handshake to the remote back-end, and then buffering
-full-duplex between the client and the remote.  Regular HTTP requests are
-handled by L<Plack::App::Proxy> as usual, though there are a few differences
-related to the generation of headers for the back-end request; see
-L</build_headers_from_env> for details.
+This is a subclass of L<Plack::App::Proxy> that adds support for transparent
+(i.e. reverse) proxying WebSocket connections.  If your proxy is a forward
+proxy that is to be explicitly configured in the system or browser, you may be
+able to use L<Plack::Middleware::Proxy::Connect> instead.
+
+This module works by looking for the C<Upgrade: WebSocket> header, completing
+the handshake with the remote, and then buffering full-duplex between the
+client and the remote.  Regular requests are handled by L<Plack::App::Proxy>
+as usual, though there are a few differences related to the generation of
+headers for the back-end request; see L</build_headers_from_env> for details.
 
 This module has no configuration options beyond what L<Plack::App::Proxy>
 requires or provides, so it may be an easy drop-in replacement.  Read the
-documentation of that module for advanced usage not covered here.  Also note
-that extra L<PSGI> server features are required in order for the WebSocket
-proxying to work.  The server must support C<psgi.streaming> and C<psgix.io>.
-It is also highly recommended that you choose a C<psgi.nonblocking> server,
-though that isn't strictly required.  L<Twiggy> is one good choice for this
-application.
+documentation of that module for advanced usage not covered here.  Also, you
+must use a L<PSGI> server that supports C<psgi.streaming> and C<psgix.io>.
+For performance reasons, you should also use a C<psgi.nonblocking> server
+(like L<Twiggy>) and the L<Plack::App::Proxy::Backend::AnyEvent::HTTP> user
+agent back-end (which is the default, so no extra configuration is needed).
 
 This module is B<EXPERIMENTAL>.  I use it in development and it works
 swimmingly for me, but it is completely untested in production scenarios.
