@@ -8,7 +8,7 @@ use AnyEvent::Handle;
 use AnyEvent::Socket;
 use HTTP::Headers;
 use HTTP::Request;
-use HTTP::Parser::XS qw/parse_http_response HEADERS_AS_ARRAYREF/;
+use HTTP::Parser::XS qw/parse_http_response HEADERS_AS_HASHREF/;
 use Plack::Request;
 use URI;
 
@@ -121,11 +121,11 @@ sub call {
                 $buffer .= $buf;
 
                 my ($ret, $http_version, $status, $message, $headers) =
-                    parse_http_response($buffer, HEADERS_AS_ARRAYREF);
+                    parse_http_response($buffer, HEADERS_AS_HASHREF);
                 $server->push_shutdown if $ret == -2;
                 return if $ret < 0;
 
-                $headers = [$self->response_headers($headers)] unless $status == 101;
+                $headers = [$self->response_headers(HTTP::Headers->new(%$headers))] unless $status == 101;
                 $writer = $res->([$status, $headers]);
                 $writer->write(substr($buffer, $ret));
                 $buffer = undef;
