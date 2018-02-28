@@ -1,0 +1,19 @@
+
+[*]
+charset                     = utf8
+end_of_line                 = lf
+insert_final_newline        = true
+trim_trailing_whitespace    = true
+
+[*.{pl,pm,t}]
+indent_style                = space
+indent_size                 = 4
+
+[{.editorconfig,*.ini}]
+indent_style                = space
+indent_size                 = 4
+
+[*.ui]
+indent_style                = space
+indent_size                 = 2
+
