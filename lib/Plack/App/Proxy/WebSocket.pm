@@ -11,8 +11,11 @@ use HTTP::Request;
 use HTTP::Parser::XS qw/parse_http_response HEADERS_AS_HASHREF/;
 use Plack::Request;
 use URI;
+use namespace::clean;
 
 use parent 'Plack::App::Proxy';
+
+our $VERSION = '9999.999'; # VERSION
 
 =head1 SYNOPSIS
 

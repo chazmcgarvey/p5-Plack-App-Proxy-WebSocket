@@ -1,0 +1,15 @@
+Revision history for Plack-App-Proxy-WebSocket
+
+{{$NEXT}}
+
+0.03      2013-08-17
+
+  * Fix a response header parsing crash bug
+  * Fixup documentation
+
+0.02      2013-04-14
+
+  * Use super build_headers_from_env
+  * Use parse_http_response to parse the backend response
+  * Remove broken link in documentation
+
