@@ -1,7 +1,7 @@
 package Plack::App::Proxy::WebSocket;
 # ABSTRACT: proxy HTTP and WebSocket connections
 
-use warnings FATAL => 'all';
+use warnings;
 use strict;
 
 use AnyEvent::Handle;
@@ -175,7 +175,7 @@ sub build_headers_from_env {
     my $headers = $self->SUPER::build_headers_from_env($env, $req);
 
     # if x-forwarded-for already existed, append the remote address; the super
-    # method fails to maintain a list of mutiple proxies
+    # method fails to maintain a list of multiple proxies
     if (my $forwarded_for = $env->{HTTP_X_FORWARDED_FOR}) {
         $headers->{'X-Forwarded-For'} = "$forwarded_for, $env->{REMOTE_ADDR}";
     }
