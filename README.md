@@ -1,14 +1,88 @@
+# NAME
 
-Plack::App::Proxy::WebSocket
-============================
+Plack::App::Proxy::WebSocket - proxy HTTP and WebSocket connections
 
-This is a perl5 PSGI app that can proxy HTTP and WebSocket connections.  For
-more information, take a look at the module's page on the
-[CPAN](http://search.cpan.org/perldoc?Plack%3A%3AApp%3A%3AProxy%3A%3AWebSocket).
+# VERSION
 
-License
--------
+version 0.04
 
-This is free software; you can redistribute it and/or modify it under the same
-terms as the Perl 5 programming language system itself.
+# SYNOPSIS
 
+    use Plack::App::Proxy::WebSocket;
+    use Plack::Builder;
+
+    builder {
+        mount "/socket.io" => Plack::App::Proxy::WebSocket->new(
+            remote               => "http://localhost:9000/socket.io",
+            preserve_host_header => 1,
+        )->to_app;
+    };
+
+# DESCRIPTION
+
+This is a subclass of [Plack::App::Proxy](https://metacpan.org/pod/Plack::App::Proxy) that adds support for transparent
+(i.e. reverse) proxying WebSocket connections.  If your proxy is a forward
+proxy that is to be explicitly configured in the system or browser, you may be
+able to use [Plack::Middleware::Proxy::Connect](https://metacpan.org/pod/Plack::Middleware::Proxy::Connect) instead.
+
+This module works by looking for the `Upgrade: WebSocket` header, completing
+the handshake with the remote, and then buffering full-duplex between the
+client and the remote.  Regular requests are handled by [Plack::App::Proxy](https://metacpan.org/pod/Plack::App::Proxy)
+as usual, though there are a few differences related to the generation of
+headers for the back-end request; see ["build\_headers\_from\_env"](#build_headers_from_env) for details.
+
+This module has no configuration options beyond what [Plack::App::Proxy](https://metacpan.org/pod/Plack::App::Proxy)
+requires or provides, so it may be an easy drop-in replacement.  Read the
+documentation of that module for advanced usage not covered here.  Also, you
+must use a [PSGI](https://metacpan.org/pod/PSGI) server that supports `psgi.streaming` and `psgix.io`.
+For performance reasons, you should also use a `psgi.nonblocking` server
+(like [Twiggy](https://metacpan.org/pod/Twiggy)) and the [Plack::App::Proxy::Backend::AnyEvent::HTTP](https://metacpan.org/pod/Plack::App::Proxy::Backend::AnyEvent::HTTP) user
+agent back-end (which is the default, so no extra configuration is needed).
+
+This module is **EXPERIMENTAL**.  I use it in development and it works
+swimmingly for me, but it is completely untested in production scenarios.
+
+# METHODS
+
+## build\_headers\_from\_env
+
+Supplement the headers-building logic from [Plack::App::Proxy](https://metacpan.org/pod/Plack::App::Proxy) to maintain
+the complete list of proxies in `X-Forwarded-For` and to set the following
+headers if they are not already set: `X-Forwarded-Proto` to the value of
+`psgi.url_scheme`, `X-Real-IP` to the value of `REMOTE_ADDR`, and `Host`
+to the host and port number of a URI (if given).
+
+This is called internally.
+
+## switching\_response\_headers
+
+Like `response_headers` from [Plack::App::Proxy](https://metacpan.org/pod/Plack::App::Proxy) but doesn't filter the
+"Connection" header nor the headers listed by the "Connection" header.
+
+# CAVEATS
+
+[Starman](https://metacpan.org/pod/Starman) ignores the `Connection` HTTP response header from applications
+and chooses its own value (`Close` or `Keep-Alive`), but WebSocket clients
+expect the value of that header to be `Upgrade`.  Therefore, WebSocket
+proxying does not work on [Starman](https://metacpan.org/pod/Starman).  Your best bet is to use a server that
+doesn't mess with the `Connection` header, like [Twiggy](https://metacpan.org/pod/Twiggy).
+
+# BUGS
+
+Please report any bugs or feature requests on the bugtracker website
+[https://github.com/chazmcgarvey/p5-Plack-App-Proxy-WebSocket/issues](https://github.com/chazmcgarvey/p5-Plack-App-Proxy-WebSocket/issues)
+
+When submitting a bug or request, please include a test-file or a
+patch to an existing test-file that illustrates the bug or desired
+feature.
+
+# AUTHOR
+
+Charles McGarvey <chazmcgarvey@brokenzipper.com>
+
+# COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018 by Charles McGarvey.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
