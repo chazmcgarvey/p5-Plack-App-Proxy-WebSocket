@@ -1,0 +1,18 @@
+Revision history for Plack-App-Proxy-WebSocket
+
+0.04      2018-02-27 23:22:34-07:00 MST7MDT
+
+  * Fix crash bug related to broken pipe to client
+  * Fix bug with improper formatting for PSGI headers for 101 responses
+
+0.03      2013-08-17
+
+  * Fix a response header parsing crash bug
+  * Fixup documentation
+
+0.02      2013-04-14
+
+  * Use super build_headers_from_env
+  * Use parse_http_response to parse the backend response
+  * Remove broken link in documentation
+
