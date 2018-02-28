@@ -120,7 +120,7 @@ sub call {
                 my $hdl = shift;
                 my $buf = delete $hdl->{rbuf};
 
-                return $writer->write($buf) if $writer;
+                return eval { $writer->write($buf) } if $writer;
                 $buffer .= $buf;
 
                 my ($ret, $http_version, $status, $message, $headers) =
@@ -130,7 +130,7 @@ sub call {
 
                 $headers = [$self->response_headers(HTTP::Headers->new(%$headers))] unless $status == 101;
                 $writer = $res->([$status, $headers]);
-                $writer->write(substr($buffer, $ret));
+                eval { $writer->write(substr($buffer, $ret)) };
                 $buffer = undef;
             });
 
