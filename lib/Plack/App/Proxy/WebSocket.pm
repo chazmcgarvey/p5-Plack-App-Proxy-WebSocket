@@ -128,7 +128,12 @@ sub call {
                 $server->push_shutdown if $ret == -2;
                 return if $ret < 0;
 
-                $headers = [$self->response_headers(HTTP::Headers->new(%$headers))] unless $status == 101;
+                if ($status == 101) {
+                    $headers = [$self->switching_response_headers(HTTP::Headers->new(%$headers))];
+                }
+                else {
+                    $headers = [$self->response_headers(HTTP::Headers->new(%$headers))];
+                }
                 $writer = $res->([$status, $headers]);
                 eval { $writer->write(substr($buffer, $ret)) };
                 $buffer = undef;
@@ -185,6 +190,34 @@ sub build_headers_from_env {
     $headers->{'X-Real-IP'} ||= $env->{REMOTE_ADDR};
 
     $headers;
+}
+
+=method switching_response_headers
+
+Like C<response_headers> from L<Plack::App::Proxy> but doesn't filter the
+"Connection" header nor the headers listed by the "Connection" header.
+
+=cut
+
+sub switching_response_headers {
+    my ($self, $headers) = @_;
+
+    # Save Connection and related headers
+    my @connection_tokens = $headers->header('Connection');
+    my @other_headers = map { $_ => $headers->header($_) } @connection_tokens;
+
+    $self->filter_headers( $headers );
+
+    # Remove PSGI forbidden headers
+    $headers->remove_header('Status');
+
+    # Add Connection and other headers listed in Connection back in
+    $headers->push_header('Connection' => \@connection_tokens, @other_headers);
+
+    my @headers;
+    $headers->scan( sub { push @headers, @_ } );
+
+    return @headers;
 }
 
 1;
